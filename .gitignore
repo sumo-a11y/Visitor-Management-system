@@ -1,6 +1,7 @@
 __pycache__/
 *.pyc
-instance/
+instance/*
+!instance/.gitkeep
 static/avatars/
 .env
 *.db
