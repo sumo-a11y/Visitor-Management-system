@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}My Visitors{% endblock %}
+{% block page_title %}<i class="bi bi-person-check me-2 text-primary"></i>My Visitors{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h5 class="mb-0">Welcome, {{ current_user.full_name }}</h5>
+    <small class="text-muted">
+      {% if pending_count > 0 %}
+        <span class="text-danger fw-semibold">{{ pending_count }} visitor(s) waiting</span>
+      {% else %}
+        No pending visitors
+      {% endif %}
+    </small>
+  </div>
+  <a href="{{ url_for('index') }}" target="_blank" class="btn btn-outline-primary btn-sm">
+    <i class="bi bi-box-arrow-up-right me-1"></i>Sign-In Kiosk
+  </a>
+</div>
+
+<!-- Pending visitors highlight -->
+{% set pending = visits | selectattr('attended', 'equalto', false) | list %}
+{% if pending %}
+<div class="card border-0 shadow-sm mb-4" style="border-left: 4px solid #dc3545 !important; border-radius:12px;">
+  <div class="card-header bg-danger text-white rounded-top" style="border-radius:12px 12px 0 0;">
+    <i class="bi bi-bell-fill me-2"></i>Visitors Waiting ({{ pending | length }})
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Visitor</th><th>Phone</th><th>Purpose</th><th>Arrived</th><th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in pending %}
+          <tr>
+            <td class="fw-semibold">{{ v.visitor_name }}</td>
+            <td>{{ v.visitor_phone or '—' }}</td>
+            <td>{{ v.purpose or '—' }}</td>
+            <td>
+              <span title="{{ v.signed_in_at.strftime('%Y-%m-%d %H:%M') }}">
+                {{ v.signed_in_at.strftime('%H:%M') }}
+              </span>
+            </td>
+            <td>
+              <form method="POST" action="{{ url_for('attend_visit', visit_id=v.id) }}" class="d-inline">
+                <button class="btn btn-success btn-sm">
+                  <i class="bi bi-check2-circle me-1"></i>Mark Attended
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- All visits -->
+<div class="card border-0 shadow-sm" style="border-radius:12px;">
+  <div class="card-header bg-white border-bottom d-flex justify-content-between" style="border-radius:12px 12px 0 0;">
+    <span class="fw-semibold">All Visit History</span>
+    <span class="badge bg-secondary">{{ visits | length }}</span>
+  </div>
+  <div class="card-body p-0">
+    {% if visits %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>#</th><th>Visitor</th><th>Phone</th><th>Purpose</th>
+            <th>Date & Time</th><th>Status</th><th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in visits %}
+          <tr>
+            <td class="text-muted small">{{ loop.index }}</td>
+            <td class="fw-semibold">{{ v.visitor_name }}</td>
+            <td>{{ v.visitor_phone or '—' }}</td>
+            <td>{{ v.purpose or '—' }}</td>
+            <td>{{ v.signed_in_at.strftime('%d %b %Y, %H:%M') }}</td>
+            <td>
+              {% if v.attended %}
+              <span class="badge badge-attended">
+                <i class="bi bi-check-circle me-1"></i>Attended
+              </span>
+              {% else %}
+              <span class="badge badge-pending">
+                <i class="bi bi-clock me-1"></i>Pending
+              </span>
+              {% endif %}
+            </td>
+            <td>
+              {% if not v.attended %}
+              <form method="POST" action="{{ url_for('attend_visit', visit_id=v.id) }}" class="d-inline">
+                <button class="btn btn-outline-success btn-sm">
+                  <i class="bi bi-check2"></i>
+                </button>
+              </form>
+              {% else %}
+              <small class="text-muted">{{ v.attended_at.strftime('%H:%M') if v.attended_at else '' }}</small>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-inbox display-4 d-block mb-2"></i>
+      No visitors yet. Share the sign-in kiosk link with visitors.
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

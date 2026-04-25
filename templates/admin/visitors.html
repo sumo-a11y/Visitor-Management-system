@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Visitor Logs{% endblock %}
+{% block page_title %}<i class="bi bi-clipboard-check me-2 text-primary"></i>Visitor Logs{% endblock %}
+
+{% block content %}
+<!-- Search bar -->
+<div class="card border-0 shadow-sm mb-3 p-3" style="border-radius:12px;">
+  <form method="GET" class="d-flex gap-2">
+    <input type="text" name="search" class="form-control" placeholder="Search by name, phone, or purpose..."
+           value="{{ search }}">
+    <button type="submit" class="btn btn-primary px-3"><i class="bi bi-search"></i></button>
+    {% if search %}
+    <a href="{{ url_for('admin_visitors') }}" class="btn btn-outline-secondary px-3">
+      <i class="bi bi-x-lg"></i>
+    </a>
+    {% endif %}
+  </form>
+</div>
+
+<div class="card border-0 shadow-sm" style="border-radius:12px;">
+  <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center" style="border-radius:12px 12px 0 0;">
+    <span class="fw-semibold">
+      {% if search %}Results for "{{ search }}"{% else %}All Visitors{% endif %}
+    </span>
+    <span class="text-muted small">{{ visits.total }} record(s)</span>
+  </div>
+  <div class="card-body p-0">
+    {% if visits.items %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>#</th><th>Visitor Name</th><th>Phone</th>
+            <th>Host (Staff)</th><th>Purpose</th>
+            <th>Signed In</th><th>Status</th><th>Attended At</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in visits.items %}
+          <tr>
+            <td class="text-muted small">{{ (visits.page - 1) * visits.per_page + loop.index }}</td>
+            <td class="fw-semibold">{{ v.visitor_name }}</td>
+            <td>{{ v.visitor_phone or '—' }}</td>
+            <td>{{ v.staff.full_name }}</td>
+            <td>{{ v.purpose or '—' }}</td>
+            <td>{{ v.signed_in_at.strftime('%d %b %Y, %H:%M') }}</td>
+            <td>
+              {% if v.attended %}
+              <span class="badge badge-attended"><i class="bi bi-check-circle me-1"></i>Attended</span>
+              {% else %}
+              <span class="badge badge-pending"><i class="bi bi-clock me-1"></i>Pending</span>
+              {% endif %}
+            </td>
+            <td>{{ v.attended_at.strftime('%H:%M') if v.attended_at else '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if visits.pages > 1 %}
+    <div class="d-flex justify-content-center py-3 gap-2">
+      {% if visits.has_prev %}
+      <a href="{{ url_for('admin_visitors', page=visits.prev_num, search=search) }}"
+         class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-chevron-left"></i> Prev
+      </a>
+      {% endif %}
+      <span class="btn btn-sm btn-primary disabled">
+        {{ visits.page }} / {{ visits.pages }}
+      </span>
+      {% if visits.has_next %}
+      <a href="{{ url_for('admin_visitors', page=visits.next_num, search=search) }}"
+         class="btn btn-sm btn-outline-secondary">
+        Next <i class="bi bi-chevron-right"></i>
+      </a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-search display-4 d-block mb-2"></i>
+      {% if search %}No results for "{{ search }}"{% else %}No visits recorded yet.{% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

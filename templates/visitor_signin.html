@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visitor Sign-In</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1e3a5f 0%, #2196F3 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 1rem;
+    }
+    .signin-card {
+      background: #fff; border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+      width: 100%; max-width: 500px; overflow: hidden;
+    }
+    .signin-header {
+      background: linear-gradient(135deg, #1e3a5f, #2196F3);
+      color: #fff; padding: 2rem;
+      text-align: center;
+    }
+    .signin-header .icon {
+      width: 70px; height: 70px; background: rgba(255,255,255,0.2);
+      border-radius: 50%; display: flex; align-items: center;
+      justify-content: center; font-size: 2rem; margin: 0 auto 1rem;
+    }
+    .signin-body { padding: 2rem; }
+    .form-label { font-weight: 600; font-size: 0.88rem; color: #374151; }
+    .form-control, .form-select {
+      border-radius: 10px; padding: 0.65rem 1rem;
+      border-color: #d1d5db; font-size: 0.95rem;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: #2196F3; box-shadow: 0 0 0 3px rgba(33,150,243,0.15);
+    }
+    .btn-signin {
+      background: linear-gradient(135deg, #1e3a5f, #2196F3);
+      color: #fff; border: none; border-radius: 10px;
+      padding: 0.75rem; font-size: 1rem; font-weight: 600;
+      width: 100%; transition: opacity 0.2s;
+    }
+    .btn-signin:hover { opacity: 0.9; color: #fff; }
+    .staff-login-link {
+      text-align: center; margin-top: 1rem; font-size: 0.85rem;
+    }
+    .clock-display {
+      font-size: 0.85rem; opacity: 0.8; margin-top: 0.25rem;
+    }
+
+    /* Custom staff picker */
+    .staff-picker { position: relative; }
+    .staff-picker-toggle {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.65rem 1rem; border: 1px solid #d1d5db;
+      border-radius: 10px; cursor: pointer; background: #fff;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      min-height: 46px;
+    }
+    .staff-picker-toggle:hover { border-color: #2196F3; }
+    .staff-picker-toggle.open {
+      border-color: #2196F3; box-shadow: 0 0 0 3px rgba(33,150,243,0.15);
+    }
+    .staff-picker-toggle .chevron { margin-left: auto; color: #6b7280; transition: transform 0.2s; }
+    .staff-picker-toggle.open .chevron { transform: rotate(180deg); }
+    .staff-picker-placeholder { color: #9ca3af; font-size: 0.95rem; }
+    .staff-picker-selected-name { font-size: 0.95rem; font-weight: 500; color: #111827; }
+    .staff-picker-selected-office { font-size: 0.75rem; color: #6b7280; line-height: 1.2; }
+
+    .staff-picker-dropdown {
+      display: none; position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+      background: #fff; border: 1px solid #d1d5db; border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15); z-index: 500;
+      overflow: hidden;
+    }
+    .staff-picker-dropdown.open { display: block; }
+    .staff-picker-search { padding: 0.6rem 0.75rem; border-bottom: 1px solid #f0f0f0; }
+    .staff-picker-search input {
+      width: 100%; border: 1px solid #e5e7eb; border-radius: 8px;
+      padding: 0.4rem 0.75rem; font-size: 0.875rem; outline: none;
+    }
+    .staff-picker-search input:focus { border-color: #2196F3; }
+    .staff-picker-list { max-height: 260px; overflow-y: auto; }
+    .staff-option {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.65rem 1rem; cursor: pointer; transition: background 0.12s;
+    }
+    .staff-option:hover { background: #f0f7ff; }
+    .staff-option.hidden { display: none; }
+    .staff-option .s-avatar {
+      width: 38px; height: 38px; border-radius: 50%; object-fit: cover;
+      flex-shrink: 0; border: 2px solid #e5e7eb;
+    }
+    .staff-option .s-initials {
+      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, #1e3a5f, #2196F3);
+      color: #fff; display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.95rem;
+    }
+    .staff-option .s-name { font-size: 0.92rem; font-weight: 500; color: #111827; }
+    .staff-option .s-office { font-size: 0.75rem; color: #6b7280; }
+    .staff-no-results {
+      padding: 1rem; text-align: center; color: #9ca3af; font-size: 0.875rem; display: none;
+    }
+
+    /* Inline avatar in toggle */
+    .toggle-avatar {
+      width: 32px; height: 32px; border-radius: 50%; object-fit: cover;
+      border: 2px solid #e5e7eb; flex-shrink: 0;
+    }
+    .toggle-initials {
+      width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, #1e3a5f, #2196F3);
+      color: #fff; display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.82rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="signin-card">
+  <div class="signin-header">
+    <div class="icon"><i class="bi bi-building"></i></div>
+    <h4 class="mb-1 fw-bold">Welcome</h4>
+    <p class="mb-1 opacity-75">Please sign in to notify your host</p>
+    <div class="clock-display" id="clock"></div>
+  </div>
+
+  <div class="signin-body">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+      <div class="alert alert-{{ cat }} rounded-3 d-flex align-items-center gap-2">
+        {% if cat == 'success' %}<i class="bi bi-check-circle-fill text-success"></i>
+        {% else %}<i class="bi bi-exclamation-triangle-fill text-danger"></i>{% endif %}
+        {{ msg }}
+      </div>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="POST" action="/signin" novalidate>
+      <div class="mb-3">
+        <label class="form-label"><i class="bi bi-person me-1"></i>Your Full Name <span class="text-danger">*</span></label>
+        <input type="text" name="visitor_name" class="form-control" placeholder="Enter your full name" required autofocus>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label"><i class="bi bi-telephone me-1"></i>Phone Number</label>
+        <input type="tel" name="visitor_phone" class="form-control" placeholder="e.g. 0244 123 456">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label"><i class="bi bi-person-badge me-1"></i>Who are you visiting? <span class="text-danger">*</span></label>
+        <input type="hidden" name="staff_id" id="staffIdInput">
+
+        <div class="staff-picker" id="staffPicker">
+          <!-- Toggle button -->
+          <div class="staff-picker-toggle" id="staffToggle" onclick="togglePicker()">
+            <span id="toggleContent">
+              <span class="staff-picker-placeholder">— Select staff member —</span>
+            </span>
+            <i class="bi bi-chevron-down chevron"></i>
+          </div>
+
+          <!-- Dropdown panel -->
+          <div class="staff-picker-dropdown" id="staffDropdown">
+            <div class="staff-picker-search">
+              <input type="text" id="staffSearch" placeholder="Search by name..." oninput="filterStaff(this.value)">
+            </div>
+            <div class="staff-picker-list" id="staffList">
+              {% for member in staff_list %}
+              <div class="staff-option"
+                   data-id="{{ member.id }}"
+                   data-name="{{ member.full_name }}"
+                   data-office="{{ member.office_number or '' }}"
+                   data-avatar="{{ url_for('static', filename='avatars/' + member.avatar) if member.avatar else '' }}"
+                   data-initial="{{ member.full_name[0].upper() }}"
+                   onclick="selectStaff(this)">
+                {% if member.avatar %}
+                <img src="{{ url_for('static', filename='avatars/' + member.avatar) }}" class="s-avatar" alt="">
+                {% else %}
+                <div class="s-initials">{{ member.full_name[0].upper() }}</div>
+                {% endif %}
+                <div>
+                  <div class="s-name">{{ member.full_name }}</div>
+                  {% if member.office_number %}
+                  <div class="s-office"><i class="bi bi-door-open"></i> Office {{ member.office_number }}</div>
+                  {% endif %}
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            <div class="staff-no-results" id="noResults">No staff found.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label"><i class="bi bi-chat-left-text me-1"></i>Purpose of Visit</label>
+        <input type="text" name="purpose" class="form-control" placeholder="e.g. Meeting, Document submission...">
+      </div>
+
+      <button type="submit" class="btn btn-signin" onclick="return validateForm()">
+        <i class="bi bi-send me-2"></i>Sign In & Notify Host
+      </button>
+    </form>
+
+    <div class="staff-login-link">
+      <a href="{{ url_for('login') }}" class="text-muted text-decoration-none">
+        <i class="bi bi-shield-lock me-1"></i>Staff / Admin Login
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent =
+      now.toLocaleDateString('en-GB', {weekday:'long', year:'numeric', month:'long', day:'numeric'})
+      + ' · ' + now.toLocaleTimeString();
+  }
+  setInterval(updateClock, 1000); updateClock();
+
+  function togglePicker() {
+    const toggle = document.getElementById('staffToggle');
+    const dropdown = document.getElementById('staffDropdown');
+    const isOpen = dropdown.classList.contains('open');
+    if (isOpen) {
+      closePicker();
+    } else {
+      toggle.classList.add('open');
+      dropdown.classList.add('open');
+      document.getElementById('staffSearch').focus();
+    }
+  }
+
+  function closePicker() {
+    document.getElementById('staffToggle').classList.remove('open');
+    document.getElementById('staffDropdown').classList.remove('open');
+    document.getElementById('staffSearch').value = '';
+    filterStaff('');
+  }
+
+  function selectStaff(el) {
+    const id = el.dataset.id;
+    const name = el.dataset.name;
+    const office = el.dataset.office;
+    const avatar = el.dataset.avatar;
+    const initial = el.dataset.initial;
+
+    document.getElementById('staffIdInput').value = id;
+
+    const avatarHtml = avatar
+      ? `<img src="${avatar}" class="toggle-avatar" alt="">`
+      : `<div class="toggle-initials">${initial}</div>`;
+
+    const officeHtml = office
+      ? `<div class="staff-picker-selected-office"><i class="bi bi-door-open"></i> Office ${office}</div>`
+      : '';
+
+    document.getElementById('toggleContent').innerHTML = `
+      ${avatarHtml}
+      <div>
+        <div class="staff-picker-selected-name">${name}</div>
+        ${officeHtml}
+      </div>`;
+
+    closePicker();
+  }
+
+  function filterStaff(query) {
+    const q = query.toLowerCase();
+    const options = document.querySelectorAll('.staff-option');
+    let visible = 0;
+    options.forEach(opt => {
+      const match = opt.dataset.name.toLowerCase().includes(q);
+      opt.classList.toggle('hidden', !match);
+      if (match) visible++;
+    });
+    document.getElementById('noResults').style.display = visible === 0 ? 'block' : 'none';
+  }
+
+  function validateForm() {
+    if (!document.getElementById('staffIdInput').value) {
+      document.getElementById('staffToggle').style.borderColor = '#dc3545';
+      document.getElementById('staffToggle').style.boxShadow = '0 0 0 3px rgba(220,53,69,0.15)';
+      document.getElementById('staffPicker').scrollIntoView({behavior:'smooth', block:'center'});
+      return false;
+    }
+    return true;
+  }
+
+  // Close picker when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!document.getElementById('staffPicker').contains(e.target)) {
+      closePicker();
+    }
+  });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
